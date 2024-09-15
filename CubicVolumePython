@@ -1,0 +1,86 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.animation import FuncAnimation
+from itertools import combinations, product
+
+# Parameters
+L = 10  # Length of the cubic volume (arbitrary units)
+N = 100  # Number of particles
+num_steps = 200  # Number of steps for the animation
+dt = 0.05  # Time step for the animation
+trail_length = 20  # Length of the particle trails
+
+# Generate random int posit for the particles
+x = L * np.random.rand(N)
+y = L * np.random.rand(N)
+z = L * np.random.rand(N)
+
+# Generate random vel for the particles
+vx = 0.5 * np.random.randn(N)
+vy = 0.5 * np.random.randn(N)
+vz = 0.5 * np.random.randn(N)
+
+# Store positions for trails
+x_trail = np.full((N, trail_length), np.nan)
+y_trail = np.full((N, trail_length), np.nan)
+z_trail = np.full((N, trail_length), np.nan)
+
+# Create figure
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.set_xlim([0, L])
+ax.set_ylim([0, L])
+ax.set_zlim([0, L])
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
+ax.set_title('Particles in a Cubic Volume with Periodic Boundary Conditions')
+ax.grid(True)
+
+# Initialize scatter plot for particles and their trails
+particles = ax.scatter(x, y, z, c=z, cmap='viridis', s=36)
+trails = ax.scatter(x_trail.flatten(), y_trail.flatten(), z_trail.flatten(), c='black', s=1, alpha=0.1)
+
+# Create the cubic volume surface
+def create_surface(ax, L):
+    # Create a semi-transparent cube
+    r = [0, L]
+    for s, e in combinations(np.array(list(product(r, r, r))), 2):
+        if np.sum(np.abs(s-e)) == r[1]-r[0]:
+            ax.plot3D(*zip(s, e), color="cyan", alpha=0.1)
+
+create_surface(ax, L)
+
+def update(frame):
+    global x, y, z, x_trail, y_trail, z_trail
+    
+    # Update positions
+    x += vx * dt
+    y += vy * dt
+    z += vz * dt
+    
+    # Apply periodic boundary conditions
+    x = np.mod(x, L)
+    y = np.mod(y, L)
+    z = np.mod(z, L)
+    
+    # Update trails
+    x_trail = np.roll(x_trail, -1, axis=1)
+    y_trail = np.roll(y_trail, -1, axis=1)
+    z_trail = np.roll(z_trail, -1, axis=1)
+    x_trail[:, -1] = x
+    y_trail[:, -1] = y
+    z_trail[:, -1] = z
+    
+    # Update scatter plot data
+    particles._offsets3d = (x, y, z)
+    particles.set_array(z)
+    trails._offsets3d = (x_trail.flatten(), y_trail.flatten(), z_trail.flatten())
+    
+    return particles, trails
+
+# Animation
+ani = FuncAnimation(fig, update, frames=num_steps, interval=50, blit=False)
+
+plt.show()
