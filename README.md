@@ -1,6 +1,7 @@
 # nuclear-computational-simulations
 function star_structure
 
+    % MATLAB
     % Constants
     G = 6.673e-8; % Gravitational constant in dyne-cm^2/g^2
     c = 2.997e10; % Speed of light in cm/s
